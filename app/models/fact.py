@@ -7,7 +7,6 @@ class Fact(Base):
     __tablename__ = "facts"
 
     id = Column(Integer, primary_key=True, index=True)
-    file_id = Column(Integer, ForeignKey('files.id'))
-    project_id = Column(Integer, ForeignKey("project.id"))
+    internal_project_id = Column(Integer, ForeignKey("projects.id"))
     date = Column(Date)
     value = Column(Float)

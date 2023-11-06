@@ -8,7 +8,10 @@ fastapi = "*"
 sqlalchemy="*"
 pandas="*"
 alembic="*"
+python-multipart="*"
 psycopg2-binary = "*"
+uvicorn = {version = "*", extras = ["standard"]}
+openpyxl = "*"
 
 [dev-packages]
 
