@@ -7,6 +7,8 @@ name = "pypi"
 fastapi = "*"
 sqlalchemy="*"
 pandas="*"
+alembic="*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
