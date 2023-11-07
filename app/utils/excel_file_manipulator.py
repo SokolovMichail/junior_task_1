@@ -3,6 +3,7 @@ from fastapi import Depends
 from sqlalchemy.orm import Session
 
 import app.models as models
+from app.schemes.file_scheme import FileModel
 from app.utils.dataframe_processor import DataframeProcessor
 from app.utils.model_utils.file_model_utils import FileModelUtils
 
@@ -21,6 +22,12 @@ class ExcelFileManipulator:
     @staticmethod
     def load_values_into_db(df: pd.DataFrame, filename: str, db: Session):
         preprocessed_dataframe = ExcelFileManipulator.preprocess_pandas_dataframe(df)
-        file = FileModelUtils.db_create_new_file(db,filename)
-        DataframeProcessor.process_dataframe(db,preprocessed_dataframe,file)
+        file = FileModelUtils.db_create_new_file(db, filename)
+        DataframeProcessor.process_dataframe(db, preprocessed_dataframe, file)
+        return file
+
+    @staticmethod
+    def return_file_from_db(db: Session, requested_file: FileModel):
+        DataframeProcessor.construct_result_dataframe(requested_file, db)
+        print(1)
 

@@ -1,3 +1,7 @@
+from __future__ import annotations
+
+from typing import List, Tuple, Type
+
 from sqlalchemy.orm import Session
 
 from app import models
@@ -28,3 +32,17 @@ class FileModelUtils:
         db.commit()
         db.refresh(new_file)
         return new_file
+
+    @staticmethod
+    def get_all_projects_from_file(db:Session,
+                                  filename:str,
+                                  version: int)\
+        -> List[models.Fact] | List[models.Plan]:
+        result = db.query(models.Project)\
+            .join(models.File, models.File.id==models.Project.file_id)\
+            .filter(models.File.file_name==filename,
+                            models.File.version==version)\
+            .all()
+        return result
+
+
