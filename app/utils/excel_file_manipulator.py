@@ -1,3 +1,7 @@
+from datetime import datetime
+from io import BytesIO
+
+import openpyxl
 import pandas as pd
 from fastapi import Depends
 from sqlalchemy.orm import Session
@@ -28,6 +32,23 @@ class ExcelFileManipulator:
 
     @staticmethod
     def return_file_from_db(db: Session, requested_file: FileModel):
-        DataframeProcessor.construct_result_dataframe(requested_file, db)
-        print(1)
+        result_dataframe = DataframeProcessor.construct_result_dataframe(requested_file, db)
+        #result_dataframe.reset_index(drop=True, inplace=True)
+        binary_file = BytesIO()
+        result_dataframe.to_excel(binary_file,sheet_name='data', startrow=1,index=False)
+        ExcelFileManipulator.postprocess_dumped_dataframe(binary_file,result_dataframe.columns)
+        return binary_file
+
+
+    @staticmethod
+    def postprocess_dumped_dataframe(excel_file: BytesIO, columns):
+        workbook = openpyxl.load_workbook(excel_file)
+        ws = workbook.active
+        for i in range(3,len(columns)+1,2):
+            ws.merge_cells(start_row=1, start_column=i, end_row=1, end_column=i + 1)
+            ws.cell(row=1,column=i).value = columns[i].split("_")[0]
+            ws.cell(row=2,column=i).value = "план"
+            ws.cell(row=2, column=i+1).value = "факт"
+            #ws[1][i].value = datetime.strptime(columns[i].split("_")[0], "%d.%m.%Y")
+        workbook.save(excel_file)
 

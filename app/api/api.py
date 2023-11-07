@@ -3,12 +3,10 @@ from io import BytesIO
 import pandas
 from fastapi import APIRouter, UploadFile, Depends
 from sqlalchemy.orm import Session
-
-from app import models
+from starlette.responses import StreamingResponse
 from app.database import get_db
 from app.schemes.file_scheme import FileModel
 from app.utils.excel_file_manipulator import ExcelFileManipulator
-from app.utils.model_utils.file_model_utils import FileModelUtils
 
 router = APIRouter()
 
@@ -23,16 +21,14 @@ async def upload_file(
     return {"data": f"File inserted under filename {file.file_name} , version {file.version}"}
 
 
-@router.get("/api/file", status_code=200,response_model=None)
+@router.get("/api/file", status_code=200)
 async def download_file(payload: FileModel,db: Session = Depends(get_db)):  # Ensures the input is greater than 0
-    ExcelFileManipulator.return_file_from_db(db, payload)
-    return {}
-    # response_object = {
-    #     "id": note_id,
-    #     "title": payload.title,
-    #     "description": payload.description
-    # }
-    # return response_object
+    binary_excel_file = ExcelFileManipulator.return_file_from_db(db, payload)
+    binary_excel_file.seek(0)
+    return StreamingResponse(
+        binary_excel_file,
+        media_type="application/vnd.ms-excel",
+        headers={"Content-Disposition": f"attachment; filename={payload.filename}"})
 #
 # @router.get("/api/diagram", status_code=200)
 # async def update_blog(payload: Schema, id: int = Path(..., gt=0)):  # Ensures the input is greater than 0
