@@ -1,9 +1,7 @@
-from datetime import datetime
 from io import BytesIO
 
 import openpyxl
 import pandas as pd
-from fastapi import Depends
 from sqlalchemy.orm import Session
 
 import app.models as models
@@ -33,7 +31,6 @@ class ExcelFileManipulator:
     @staticmethod
     def return_file_from_db(db: Session, requested_file: FileModel):
         result_dataframe = DataframeProcessor.construct_result_dataframe(requested_file, db)
-        #result_dataframe.reset_index(drop=True, inplace=True)
         binary_file = BytesIO()
         result_dataframe.to_excel(binary_file,sheet_name='data', startrow=1,index=False)
         ExcelFileManipulator.postprocess_dumped_dataframe(binary_file,result_dataframe.columns)
