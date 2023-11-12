@@ -6,6 +6,7 @@ name = "pypi"
 [packages]
 fastapi = "*"
 sqlalchemy="*"
+sqlalchemy_utils = "*"
 pandas="*"
 alembic="*"
 python-multipart="*"

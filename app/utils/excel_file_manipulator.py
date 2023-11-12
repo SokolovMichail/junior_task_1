@@ -1,10 +1,10 @@
 from io import BytesIO
+from typing import Optional
 
 import openpyxl
 import pandas as pd
 from sqlalchemy.orm import Session
 
-import app.models as models
 from app.schemes.file_scheme import FileModel
 from app.utils.dataframe_processor import DataframeProcessor
 from app.utils.model_utils.file_model_utils import FileModelUtils
@@ -29,8 +29,10 @@ class ExcelFileManipulator:
         return file
 
     @staticmethod
-    def return_file_from_db(db: Session, requested_file: FileModel):
+    def return_file_from_db(db: Session, requested_file: FileModel) -> Optional[BytesIO]:
         result_dataframe = DataframeProcessor.construct_result_dataframe(requested_file, db)
+        if len(result_dataframe) == 0:
+            return None
         binary_file = BytesIO()
         result_dataframe.to_excel(binary_file,sheet_name='data', startrow=1,index=False)
         ExcelFileManipulator.postprocess_dumped_dataframe(binary_file,result_dataframe.columns)

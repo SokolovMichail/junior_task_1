@@ -2,7 +2,6 @@ version: '3.7'
 
 services:
   server:
-    command: "python3 main.py"
     ports:
       - "8000:8000"
     env_file:

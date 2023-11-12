@@ -1,14 +1,17 @@
+from __future__ import annotations
+
 from io import BytesIO
 
 import pandas
 from fastapi import APIRouter, UploadFile, Depends
 from sqlalchemy.orm import Session
-from starlette.responses import StreamingResponse
+from starlette.responses import StreamingResponse, JSONResponse
 
 from app.database import get_db
 from app.schemes.diagram_request import DiagramDataRequest
 from app.schemes.diagram_response import DiagramDataResponse
 from app.schemes.file_scheme import FileModel
+from app.schemes.utils import Message
 from app.utils.excel_file_manipulator import ExcelFileManipulator
 from app.utils.model_utils.file_model_utils import FileModelUtils
 
@@ -29,8 +32,17 @@ async def upload_file(
     return {"data": f"File inserted under filename {file.file_name} , version {file.version}"}
 
 
-@router.get("/api/file/{filename}_{version}", response_model=None, response_class=StreamingResponse)
-async def download_file(filename: str, version: str, db: Session = Depends(get_db)) -> StreamingResponse:
+@router.get("/api/file", response_model=None,
+            responses={
+                404: {"model": Message, "description": "The item was not found"},
+                200: {
+                    "content": {
+                        "application/vnd.ms-excel": "file"
+                    },
+                },
+            },
+            )
+async def download_file(file: FileModel = Depends(), db: Session = Depends(get_db)):
     """
     Сгенерировать и выгрузить excel файл на основе данных БД
 
@@ -39,15 +51,13 @@ async def download_file(filename: str, version: str, db: Session = Depends(get_d
     version[int]: Версия файла
 
     """
-    # Изначально я хотел payload поместить в download file.
-    # Но это портит SwaggerUI( нельзя выполнить в нем данный запрос)
-    # (при этом сам роут работает, и в Insomnia(аналог Postman) корректно возвращается файл)
-    # Поэтому пришлось вот так.
     payload = FileModel(
-        version=version,
-        filename=filename
+        version=file.version,
+        filename=file.filename
     )
     binary_excel_file = ExcelFileManipulator.return_file_from_db(db, payload)
+    if binary_excel_file is None:
+        return JSONResponse(status_code=404, content={"message": "The file you requested was not found"})
     binary_excel_file.seek(0)
     return StreamingResponse(
         binary_excel_file,
@@ -57,7 +67,7 @@ async def download_file(filename: str, version: str, db: Session = Depends(get_d
 
 @router.get("/api/year_report", response_model=DiagramDataResponse)
 async def get_report(
-        data: DiagramDataRequest,
+        data: DiagramDataRequest = Depends(),
         db: Session = Depends(get_db)
 ) -> DiagramDataResponse:
     t = DiagramDataResponse(data=FileModelUtils.get_project_data_for_year(db, data),
